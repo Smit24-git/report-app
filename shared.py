@@ -9,7 +9,7 @@ def clear_screen():
 
 
 def print_options_and_get_selection(options):
-    clear_screen()
+    # clear_screen()
     print("\n")
     for option in options:
         print(option)

@@ -101,7 +101,7 @@ class ReportDB():
         return self.list("select * from database_connection")
 
 
-    """//////////////// report_group /////////////////"""
+    """//////////////// group /////////////////"""
 
 
     def add_groups(self, data):
@@ -135,13 +135,83 @@ class ReportDB():
     """////////////////// report_group ///////////////// """
 
 
-    def  list_report_group_by_group(self, grp_id):
+    def list_report_group_by_group(self, grp_id):
         query = f"""select * from report_group where
                          group_type={grp_id}"""
         return self.list(query)
+   
+    def list_report_group_by_report(self, rep_id):
+        query = f"""
+            select 
+                report_group.id,
+                report_group.report,
+                report_group.group_type,
+                group_type.name
+            from report_group
+            left join group_type 
+                on group_type.id = report_group.group_type
+            where report_group.report={rep_id}"""
+        return self.list(query)
+
+    def add_report_groups(self, data):
+        self.add_all("""
+            insert into report_group (report, group_type)
+            values (:rep, :g_type)
+        """, data)
+
+    def remove_report_group(self, _id):
+        self.remove_one("""
+            delete from report_group
+            where id=:id
+        """, {'id': _id})
+
     
+    """///////////////// report_parameters ////////////////// """
+
+    
+    def list_report_parameters_by_report(self, rep_id):
+        return self.list(f"""
+            select * from report_parameter
+            where report={rep_id}
+        """)
+
+    def add_report_parameter(self, data):
+        is_default = data["is_def"]
+        rep_id = data["report"]
+
+        rp_id = self.add_one("""
+            insert into report_parameter(is_default, report)
+            values (:d, :r)
+            """, {"d": is_default, "r":rep_id})
+        params = []
+        for param in data["parameters"]:
+            params.append({
+                "k": param["key"], 
+                "v": param["value"], 
+                "rp": rp_id
+            })
+        self.add_all("""
+            insert into parameter (key,value,report_parameter)
+            values(:k, :v, :rp)
+            """, params)
+
+    def remove_report_parameter(self, _id):
+        self.remove_all(f"""
+            delete from parameter
+            where report_parameter=:rp_id
+        """,({'rp_id': _id},))
+        self.remove_all(f"""
+            delete from report_parameter
+            where id=:id
+        """,({'id':_id},))
 
     """///////////////// parameter ////////////////// """
+
+    def list_parameters_by_report_parameter(self, rp_id):
+        return self.list(f"""
+            select * from parameter
+            where report_parameter={rp_id}
+        """)
 
     def list_default_parameters_by_report(self,rep_id):
         query = f"""
@@ -160,7 +230,7 @@ class ReportDB():
 
     def list_reports(self):
         """ provides the list of reports """
-        self.list("select * from report")
+        return self.list("select * from report")
 
     def list_reports_by_group(self, grp_id):
         rep_grps = self.list_report_group_by_group(grp_id)
@@ -190,29 +260,21 @@ class ReportDB():
         rep_param = data["report_parameter"]
         if "parameters" in rep_param and len(rep_param["parameters"]) > 0:
             is_default = rep_param["is_def"]
-            rp_id = self.add_one("""
-                insert into report_parameter(is_default, report)
-                values (:d, :r)
-                """, {"d": is_default, "r":rep_id})
-            params = []
-            for param in rep_param["parameters"]:
-                params.append({
-                    "k": param["key"], 
-                    "v": param["value"], 
-                    "rp": rp_id
-                })
-            self.add_all("""
-                insert into parameter (key,value,report_parameter)
-                values(:k, :v, :rp)
-                """, params)
-
+            self.add_report_parameter({
+                "report": rep_id,
+                "is_def": is_default,
+                "parameters": rep_param["parameters"]
+            })
 
     def remove_report(self, _id):
         """ removes report by report id """
+        rp = self.list_report_parameters_by_report(_id)
+        for r in rp:
+            self.remove_report_parameter(r[i])
         self.remove_one("""
             delete from report
-            where id=:i
-        """, {i:_id})
+            where id=:id
+        """, {'id':_id})
 
     """///////////////// generic functions ///////////////"""
 
@@ -226,8 +288,29 @@ class ReportDB():
 
         con.close()
         return res
+    
+    
+    def find_all(self, query, data):
+        con = sqlite3.connect(self.db_name)
+        cur = con.cursor()
+
+        cur.execute(query, data)
+        res = cur.fetchall()
+
+        con.close()
+        return res
+    
 
     def add_all(self, query, data):
+        con = sqlite3.connect(self.db_name)
+        cur = con.cursor()
+
+        cur.executemany(query, data)
+        
+        con.commit()        
+        con.close()
+
+    def remove_all(self, query, data):
         con = sqlite3.connect(self.db_name)
         cur = con.cursor()
 
