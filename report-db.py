@@ -113,12 +113,19 @@ class ReportDB():
                 :name
             )""", data)
 
+    def update_group(self, data):
+        self.update("""
+            update group_type
+            set name=:name
+            where id=:id
+        """, data)
+
     def remove_group(self, _id):
         """ removes group """
         self.remove_one("""
             delete from group_type
-            where id=:i
-        """, {i:_id})
+            where id=:id
+        """, {'id':_id})
 
     def list_groups(self):
         """ lists all groups"""
