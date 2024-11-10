@@ -2,9 +2,10 @@ import time
 import math
 import importlib
 import re
-from mssql_helper import mssql_get_data
-ReportDB = importlib.import_module("report-db").ReportDB
+from mssql_helper import mssql_get_data, mssql_get_column_names
+from file_manager import FileManager
 
+ReportDB = importlib.import_module("report-db").ReportDB
 db = ReportDB()
 
 def list_and_get_group_name():
@@ -29,7 +30,7 @@ def find_connection(c_id, conns):
 def run_continous_loop(grp_n, timer, cycles):
     timestamp = math.floor(time.time())
     loop_file_name = f"./reports/{timestamp}_{grp_n}_t{timer}_c{cycles}.txt"
-    
+    f = FileManager(loop_file_name)
     reports = db.list_reports_by_group(grp_n)
     conns = db.list_db_connections()
 
@@ -41,6 +42,7 @@ def run_continous_loop(grp_n, timer, cycles):
             parameters = db.list_default_parameters_by_report(report[0])
             cmd = replace_command_parameters(cmd, parameters)
             con = find_connection(report[3], conns)
+            columns = mssql_get_column_names(con, cmd)
             data = mssql_get_data(con,cmd)
             param_list = f",\n\t ".join(
                 [f'{p[1]}: {p[2]}' for p in parameters]
@@ -51,6 +53,11 @@ def run_continous_loop(grp_n, timer, cycles):
             f"\nparameters:"
             f"\n\t{param_list}"
             f"\nrow count: {len(data)}.\n")
+            f.append_string(str(report[1]))
+            f.append_data_arr((columns,))
+            f.append_data_arr(data)
+            f.append_string(f"row count: {len(data)}.")
+            f.append_new_line()
         c_cycle += 1
         print(f"{c_cycle} cycle(s) completed.")
         if c_cycle != cycles:
