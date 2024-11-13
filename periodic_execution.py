@@ -2,7 +2,7 @@ import time
 import math
 import importlib
 import re
-from mssql_helper import mssql_get_data, mssql_get_column_names
+from mssql_helper import mssql_get_data 
 from file_manager import FileManager
 
 ReportDB = importlib.import_module("report-db").ReportDB
@@ -42,7 +42,6 @@ def run_continous_loop(grp_n, timer, cycles):
             parameters = db.list_default_parameters_by_report(report[0])
             cmd = replace_command_parameters(cmd, parameters)
             con = find_connection(report[3], conns)
-            columns = mssql_get_column_names(con, cmd)
             data = mssql_get_data(con,cmd)
             param_list = f",\n\t ".join(
                 [f'{p[1]}: {p[2]}' for p in parameters]
@@ -52,11 +51,12 @@ def run_continous_loop(grp_n, timer, cycles):
             f"\nreport: '{report[1]}'"
             f"\nparameters:"
             f"\n\t{param_list}"
-            f"\nrow count: {len(data)}.\n")
+            f"\nrow count: {len(data['records'])}.\n")
+
             f.append_string(str(report[1]))
-            f.append_data_arr((columns,))
-            f.append_data_arr(data)
-            f.append_string(f"row count: {len(data)}.")
+            f.append_data_arr((data['column_headers'],))
+            f.append_data_arr(data['records'])
+            f.append_string(f"row count: {len(data['records'])}.")
             f.append_new_line()
         c_cycle += 1
         print(f"{c_cycle} cycle(s) completed.")

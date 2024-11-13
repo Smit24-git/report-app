@@ -6,13 +6,12 @@ def mssql_get_data(con,cmd):
     cursor = connection.cursor()
 
     cursor.execute(cmd)
+    
+    headers = (col[0] for col in cursor.description)
+    records = cursor.fetchall()
 
-    return cursor.fetchall()
+    return {
+        'column_headers': headers,
+        'records': records
+    }
 
-def mssql_get_column_names(con, cmd):
-    connection = pyodbc.connect(con)
-    cursor = connection.cursor()
-
-    cursor.execute(cmd)
-
-    return (col[0] for col in cursor.description)
