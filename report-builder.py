@@ -19,10 +19,11 @@ exit_option = 0
 
 def  main():
     """ init function """
-
+    clear_screen()
     selection = print_options_and_get_selection(builder_options)
 
     while(selection != exit_option):
+        clear_screen()
         match selection:
             case 1:
                 continue_with_connection_string_option()
@@ -32,7 +33,7 @@ def  main():
                 continue_with_report_option()
             case _:
                 input("\ninvalid option. \n")
-
+        clear_screen()
         selection = print_options_and_get_selection(builder_options)
 
 

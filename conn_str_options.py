@@ -1,4 +1,7 @@
-from shared import multi_line_input, clear_screen, print_options_and_get_selection
+from shared import multi_line_input 
+from shared import clear_screen
+from shared import print_options_and_get_selection
+from shared import is_id_exist
 import importlib
 ReportDB = importlib.import_module("report-db").ReportDB
 
@@ -54,17 +57,11 @@ def print_all_connections():
         print(conn)
     return conns
 
-def is_conn_exists(con_id, conns):
-    for conn in conns:
-        if conn[0] == int(con_id):
-            return True
-    return False
-
 def update_connection_string():
     conns = print_all_connections()
     
-    con_id = input("select id: ")
-    if is_conn_exists(con_id, conns):
+    con_id = int(input("select id: "))
+    if is_id_exist(con_id, conns):
         print("new connection string:")
         connection = multi_line_input()
         db.update_db_connection({
@@ -83,8 +80,8 @@ def remove_connection_string():
     """ provides an option to remove existing connection string """
     conns = print_all_connections()
     
-    con_id = input("select id: ")
-    if is_conn_exists(con_id, conns):
+    con_id = int(input("select id: "))
+    if is_id_exist(con_id, conns):
         db.remove_db_connection(con_id)
         input("connection string is removed..."
             " press enter to continue...")
@@ -96,11 +93,11 @@ def remove_connection_string():
 
 def continue_with_connection_string_option():
     """ runs with connection string options """
-    print("")
     selection = print_options_and_get_selection(
         connection_string_options
     )
     while(selection!=connection_string_exit_option):
+        clear_screen()
         match selection:
             case 1:
                 view_connection_strings()
@@ -113,7 +110,7 @@ def continue_with_connection_string_option():
             case _:
                 input("\ninvalid option. \n")
 
-
+        clear_screen()
         selection = print_options_and_get_selection(
             connection_string_options
         )

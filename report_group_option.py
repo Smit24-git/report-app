@@ -1,4 +1,5 @@
 from shared import clear_screen, print_options_and_get_selection
+from shared import is_id_exist
 import importlib
 ReportDB = importlib.import_module("report-db").ReportDB
 
@@ -46,16 +47,10 @@ def print_groups():
         print(group)
     return groups
 
-def is_group_exist(grp_id,grps):
-    for grp in grps:
-        if grp[0] == int(grp_id):
-            return True
-    return False
-
 def update_group():
     grps = print_groups();
-    grp_id = input("select group:") 
-    if is_group_exist(grp_id, grps):
+    grp_id = int(input("select group:")) 
+    if is_id_exist(grp_id, grps):
         name = input("new name:")
         db.update_group({
             'id': grp_id,
@@ -73,8 +68,8 @@ def update_group():
 def remove_group():
     """remove group"""
     grps = print_groups();
-    grp_id = input("select group:") 
-    if is_group_exist(grp_id, grps):
+    grp_id = int(input("select group:")) 
+    if is_id_exist(grp_id, grps):
         db.remove_group(grp_id)
         input("\ngroup removed sucessfully."
               "\n\npress enter to continue...")
@@ -87,11 +82,12 @@ def remove_group():
 
 def continue_with_report_group_option():
     """ runs with report group options """
-    print("")
     selection = print_options_and_get_selection(
         options
     )
+
     while(selection != exit_option):
+        clear_screen()
         match selection:
             case 1:
                 list_all()
@@ -104,7 +100,7 @@ def continue_with_report_group_option():
             case _:
                 input("\ninvalid option. \n")
 
-
+        clear_screen()
         selection = print_options_and_get_selection(
             options
         )

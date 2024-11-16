@@ -4,6 +4,7 @@ import importlib
 import re
 from mssql_helper import mssql_get_data 
 from file_manager import FileManager
+from shared import find_by_id
 
 ReportDB = importlib.import_module("report-db").ReportDB
 db = ReportDB()
@@ -21,12 +22,6 @@ def replace_command_parameters(cmd, params):
         cmd = re.sub(f'\${p[1]}',p[2],cmd)
     return cmd
 
-def find_connection(c_id, conns):
-    for c in conns:
-        if c[0] == c_id:
-            return c[3]
-    return ''
-
 def run_continous_loop(grp_n, timer, cycles):
     timestamp = math.floor(time.time())
     loop_file_name = f"./reports/{timestamp}_{grp_n}_t{timer}_c{cycles}.txt"
@@ -41,8 +36,8 @@ def run_continous_loop(grp_n, timer, cycles):
             cmd = report[2]
             parameters = db.list_default_parameters_by_report(report[0])
             cmd = replace_command_parameters(cmd, parameters)
-            con = find_connection(report[3], conns)
-            data = mssql_get_data(con,cmd)
+            con = find_by_id(report[3], conns)
+            data = mssql_get_data(con[3],cmd)
             param_list = f",\n\t ".join(
                 [f'{p[1]}: {p[2]}' for p in parameters]
             )
